@@ -2,9 +2,13 @@ package service
 
 import (
 	"fmt"
+	"go-receiver/configs"
 	serviceErr "go-receiver/internal/errors"
 	"go-receiver/internal/repository"
+	"strconv"
+	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 
 	"golang.org/x/crypto/bcrypt"
@@ -17,6 +21,7 @@ type authService struct {
 
 type AuthService interface {
 	RegisterUser(p RegisterUserParams) *serviceErr.ErrorDetail
+	LoginUser(params LoginUser) (token string, err *serviceErr.ErrorDetail)
 }
 
 func NewAuthService(usersRepo repository.UsersRepository, serviceErrConfig *serviceErr.ErrorConfig) AuthService {
@@ -66,4 +71,70 @@ func (s *authService) RegisterUser(p RegisterUserParams) *serviceErr.ErrorDetail
 	}
 
 	return nil
+}
+
+type Claims struct {
+	Account string `json:"account"`
+	Role string `json:"role"`
+	jwt.StandardClaims
+}
+type GenerateTokenParams struct {
+	Account 	string
+	UserName 	string
+	UserId		uint
+}
+func (s *authService) GenerateToken(params GenerateTokenParams) (string, *serviceErr.ErrorDetail) {
+	now := time.Now()
+	jwtId := params.Account + strconv.FormatInt(now.Unix(), 10)
+
+	claims := Claims{
+		Account: params.Account,
+		Role: "user",
+		StandardClaims: jwt.StandardClaims{
+			Audience: params.Account,
+			ExpiresAt: now.Add(86400 * time.Second).Unix(),
+			IssuedAt: now.Unix(),
+			NotBefore: now.Unix(),
+			Id: jwtId,
+			Issuer: "MQTT-Service",
+			Subject: strconv.Itoa(int(params.UserId)),
+		},
+	}
+
+	tokenClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token, tokenErr := tokenClaims.SignedString([]byte(configs.Configs.App.JWTSecret))
+	if tokenErr != nil {
+		fmt.Println(tokenErr)
+		return "", &s.serviceError.InternalServerErr
+	}
+
+	return token, nil
+}
+
+type LoginUser struct {
+	Account string
+	Password string
+}
+func (s *authService) LoginUser(params LoginUser) (token string, err *serviceErr.ErrorDetail) {
+	// find user
+	user, userErr := s.usersRepo.FindOneByAccount(params.Account)
+	if userErr != nil {
+		fmt.Println("userErr is", userErr)
+		return "", &s.serviceError.InternalServerErr
+	}
+
+	// compare password
+	compareErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(params.Password))
+	if compareErr != nil {
+		fmt.Println("compareErr is", compareErr)
+		return "", &s.serviceError.InternalServerErr
+	}
+	
+	accessToken, tokenErr := s.GenerateToken(GenerateTokenParams{Account: params.Account, UserName: user.Name, UserId: user.ID})
+	if tokenErr != nil {
+		fmt.Println("tokenErr is", tokenErr)
+		return "", &s.serviceError.InternalServerErr
+	}
+
+	return accessToken, nil
 }

@@ -13,8 +13,9 @@ type Config struct {
 }
 
 type AppConfig struct {
-	Host string `map:"host"`
-	Port int    `map:"port"`
+	Host 			string `map:"host"`
+	Port 			int    `map:"port"`
+	JWTSecret 		string    `map:"jwtSecret"`
 }
 
 type DatabaseConfig struct {
@@ -37,6 +38,6 @@ func init() {
 	
 	err := viper.Unmarshal(&Configs)
 	if err != nil {
-		log.Fatal("Viper Unmarshal Error")
+		log.Fatal("Viper Unmarshal Error:", err)
 	}
 }
