@@ -1,3 +1,6 @@
+//go:build wireinject
+// +build wireinject
+
 package di
 
 import (
@@ -21,6 +24,6 @@ func InitializeAuthController() (controller.AuthController, error) {
 }
 
 func InitializeDeviceController() (controller.DeviceController, error) {
-	wire.Build(controller.NewDeviceController, service.NewDeviceService, repository.NewDeviceRepository, database.GetDB)
+	wire.Build(controller.NewDeviceController, service.NewDeviceService, serviceErr.NewErrorConfig, repository.NewDeviceRepository, database.GetDB)
 	return nil, nil
 }

@@ -55,6 +55,7 @@ func InitializeDeviceController() (controller.DeviceController, error) {
 		return nil, err
 	}
 	deviceService := service.NewDeviceService(deviceRepository)
-	deviceController := controller.NewDeviceController(deviceService)
+	errorConfig := serviceErr.NewErrorConfig()
+	deviceController := controller.NewDeviceController(deviceService, errorConfig)
 	return deviceController, nil
 }

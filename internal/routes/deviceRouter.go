@@ -12,4 +12,5 @@ func SetDeviceRoutes(router *gin.Engine, deviceController controller.DeviceContr
 	deviceRouter.Use(middleware.AuthMiddleware())
 
 	deviceRouter.GET("/:id", deviceController.GetSingleDevice)
+	deviceRouter.POST("/", deviceController.CreateSingleDevice)
 }

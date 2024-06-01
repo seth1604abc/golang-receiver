@@ -8,19 +8,21 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
 
 type deviceController struct {
 	deviceService 	service.DeviceService
-	serviceErr		serviceErr.ErrorConfig
+	serviceErr		*serviceErr.ErrorConfig
 }
 
 type DeviceController interface {
 	GetSingleDevice(ctx *gin.Context)
+	CreateSingleDevice(ctx *gin.Context)
 }
 
-func NewDeviceController(deviceService service.DeviceService) DeviceController {
-	return &deviceController{deviceService: deviceService}
+func NewDeviceController(deviceService service.DeviceService, serviceErr *serviceErr.ErrorConfig) DeviceController {
+	return &deviceController{deviceService: deviceService, serviceErr: serviceErr}
 }
 
 func (c *deviceController) GetSingleDevice(ctx *gin.Context) {
@@ -30,28 +32,69 @@ func (c *deviceController) GetSingleDevice(ctx *gin.Context) {
 		ctx.JSON(c.serviceErr.Unauthorized.Code, gin.H{"error": c.serviceErr.Unauthorized.Message})
 		return
 	}
-	fmt.Println(userId)
 
 	id, parseErr := strconv.ParseUint(deviceId, 10, 64)
 	if parseErr != nil {
+		fmt.Printf("parseErr is %v", parseErr)
 		ctx.JSON(c.serviceErr.InvalidDeviceId.Code, gin.H{"error": c.serviceErr.InvalidDeviceId.Message})
 		return
 	}
 
 	device, getUserErr := c.deviceService.GetDeviceById(uint(id))
 	if getUserErr != nil {
+		fmt.Printf("parseErr is %v", getUserErr)
 		ctx.JSON(c.serviceErr.InternalServerErr.Code, gin.H{"error": c.serviceErr.InternalServerErr.Message})
 		return
 	}
 	if device == nil {
+		fmt.Println("device is nil")
 		ctx.JSON(c.serviceErr.DeviceNotFound.Code, gin.H{"error": c.serviceErr.DeviceNotFound.Message})
 		return
 	}
 
 	if device.UserId != userId {
+		fmt.Printf("userId is %T", device.UserId)
 		ctx.JSON(c.serviceErr.DeviceNotFound.Code, gin.H{"error": c.serviceErr.DeviceNotFound.Message})
 		return
 	}
 
 	ctx.JSON(http.StatusOK, device)
+}
+
+type CreateSingleDeviceParams struct {
+	DeviceName string `json:"deviceName" validate:"required"`
+}
+func (c *deviceController) CreateSingleDevice(ctx *gin.Context) {
+	userId, exist := ctx.Get("user")
+	if !exist {
+		ctx.JSON(c.serviceErr.InvalidParams.Code, gin.H{"message":c.serviceErr.InvalidParams.Message})
+		return
+	}
+
+	uid, ok := userId.(uint)
+	if !ok {
+		ctx.JSON(c.serviceErr.Unauthorized.Code, gin.H{"message":c.serviceErr.Unauthorized.Message})
+		return
+	}
+
+	var body CreateSingleDeviceParams
+
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.JSON(c.serviceErr.InvalidParams.Code, gin.H{"message": c.serviceErr.InvalidParams.Message})
+		return
+	}
+
+	validate := validator.New()
+	if err := validate.Struct(body); err != nil {
+		ctx.JSON(c.serviceErr.InvalidParams.Code, gin.H{"message": c.serviceErr.InvalidParams.Message})
+		return
+	}
+
+	err := c.deviceService.CreateOneDevice(uid, body.DeviceName)
+	if err != nil {
+		ctx.JSON(c.serviceErr.InternalServerErr.Code, gin.H{"message": c.serviceErr.InternalServerErr.Message})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "device created"})
 }

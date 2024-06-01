@@ -8,6 +8,7 @@ type ErrorConfig struct {
 	DeviceNotFound		ErrorDetail
 	InvalidDeviceId		ErrorDetail
 	Unauthorized		ErrorDetail
+	InvalidParams		ErrorDetail
 }
 
 type ErrorDetail struct {
@@ -18,6 +19,10 @@ type ErrorDetail struct {
 func NewErrorConfig() *ErrorConfig {
 	fmt.Println("err config")
 	return &ErrorConfig{
+		InvalidParams: ErrorDetail{
+			Code: 400,
+			Message: "invalid params",
+		},
 		InvalidDeviceId: ErrorDetail{
 			Code:    400,
 			Message: "invalid device id",

@@ -14,6 +14,7 @@ type deviceRepo struct {
 
 type DeviceRepository interface {
 	FindOneByID(id uint) (*models.Device, error)
+	CreateSingleDevice(device models.Device) error
 }
 
 func NewDeviceRepository(*gorm.DB) (DeviceRepository, error) {
@@ -37,4 +38,15 @@ func (r *deviceRepo) FindOneByID(id uint) (*models.Device, error) {
 	}
 
 	return device, nil
+}
+
+func (r *deviceRepo) CreateSingleDevice(device models.Device) error {
+	result := r.db.Create(&device)
+
+	if result.Error != nil {
+		fmt.Println(result.Error)
+		return result.Error
+	}
+
+	return nil
 }
