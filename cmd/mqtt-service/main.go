@@ -22,18 +22,15 @@ func main() {
 	}
 
 	router := gin.Default()
-	// config := cors.DefaultConfig()
-	// config.AllowOrigins = []string{"http://localhost:8080"}
-	// config.AllowHeaders = append(config.AllowHeaders, "Authorization")
-	config := cors.Config{
-		AllowOrigins:     []string{"http://localhost:8080"}, // 設置允許的源
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS", "PUT"},
+		AllowHeaders:     []string{"Authorization", "Content-Type", "Upgrade", "Origin",
+		"Connection", "Accept-Encoding", "Accept-Language", "Host", "Access-Control-Request-Method", "Access-Control-Request-Headers"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
-	}
-
-	router.Use(cors.New(config))
+	}))
 
 	routes.SetUpRouter(router)
 

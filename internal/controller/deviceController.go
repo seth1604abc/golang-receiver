@@ -29,7 +29,12 @@ func (c *deviceController) GetSingleDevice(ctx *gin.Context) {
 	deviceId := ctx.Param("id")
 	userId, exist := ctx.Get("user")
 	if !exist {
-		ctx.JSON(c.serviceErr.Unauthorized.Code, gin.H{"error": c.serviceErr.Unauthorized.Message})
+		ctx.JSON(c.serviceErr.Unauthorized.Status, gin.H{
+			"data": map[string]interface{}{
+					"code": c.serviceErr.Unauthorized.Code,
+					"message": c.serviceErr.Unauthorized.Message,
+				},
+		})
 		return
 	}
 
@@ -67,34 +72,64 @@ type CreateSingleDeviceParams struct {
 func (c *deviceController) CreateSingleDevice(ctx *gin.Context) {
 	userId, exist := ctx.Get("user")
 	if !exist {
-		ctx.JSON(c.serviceErr.InvalidParams.Code, gin.H{"message":c.serviceErr.InvalidParams.Message})
+		ctx.JSON(c.serviceErr.Unauthorized.Status, gin.H{
+			"data": map[string]interface{}{
+				"code": c.serviceErr.Unauthorized.Code,
+				"message":c.serviceErr.Unauthorized.Message,
+			},
+		})
 		return
 	}
 
 	uid, ok := userId.(uint)
 	if !ok {
-		ctx.JSON(c.serviceErr.Unauthorized.Code, gin.H{"message":c.serviceErr.Unauthorized.Message})
+		ctx.JSON(c.serviceErr.Unauthorized.Status, gin.H{
+			"data": map[string]interface{}{
+				"code": c.serviceErr.Unauthorized.Code,
+				"message":c.serviceErr.Unauthorized.Message,
+			},
+		})
 		return
 	}
 
 	var body CreateSingleDeviceParams
 
 	if err := ctx.ShouldBindJSON(&body); err != nil {
-		ctx.JSON(c.serviceErr.InvalidParams.Code, gin.H{"message": c.serviceErr.InvalidParams.Message})
+		ctx.JSON(c.serviceErr.InvalidParams.Status, gin.H{
+			"data": map[string]interface{}{
+				"code": c.serviceErr.InvalidParams.Code,
+				"message":c.serviceErr.InvalidParams.Message,
+			},
+		})
 		return
 	}
 
 	validate := validator.New()
 	if err := validate.Struct(body); err != nil {
-		ctx.JSON(c.serviceErr.InvalidParams.Code, gin.H{"message": c.serviceErr.InvalidParams.Message})
+		ctx.JSON(c.serviceErr.InvalidParams.Status, gin.H{
+			"data": map[string]interface{}{
+				"code": c.serviceErr.InvalidParams.Code,
+				"message":c.serviceErr.InvalidParams.Message,
+			},
+		})
 		return
 	}
 
 	err := c.deviceService.CreateOneDevice(uid, body.DeviceName)
 	if err != nil {
-		ctx.JSON(c.serviceErr.InternalServerErr.Code, gin.H{"message": c.serviceErr.InternalServerErr.Message})
+		ctx.JSON(c.serviceErr.InternalServerErr.Status, gin.H{
+			"data": map[string]interface{}{
+				"code": c.serviceErr.InternalServerErr.Code,
+				"message":c.serviceErr.InternalServerErr.Message,
+			},
+		})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"message": "device created"})
+	ctx.JSON(http.StatusOK, gin.H{
+		"data": map[string]interface{}{
+			"code": http.StatusOK,
+			"message":"create device success",
+		},
+	})
 }

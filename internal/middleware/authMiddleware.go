@@ -17,7 +17,10 @@ func AuthMiddleware() gin.HandlerFunc {
 		token := c.GetHeader("Authorization")
 		if token == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"message": "Unauthorizaed",
+				"data": map[string]interface{}{
+					"code": 401001,
+					"message": "Unauthorizaed",
+				},
 			})
 			c.Abort()
 			return
@@ -26,7 +29,10 @@ func AuthMiddleware() gin.HandlerFunc {
 		isValid, claims, validErr := validToken(token)
 		if validErr != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"message": "internal server error",
+				"data": map[string]interface{}{
+					"code": 500,
+					"message": "internal server error",
+				},
 			})
 			fmt.Println(validErr)
 			c.Abort()
@@ -35,7 +41,10 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		if !isValid {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"message": "Unauthorizaed",
+				"data": map[string]interface{}{
+					"code": 401001,
+					"message": "Unauthorizaed",
+				},
 			})
 			c.Abort()
 			return
@@ -44,7 +53,10 @@ func AuthMiddleware() gin.HandlerFunc {
 		userId, idErr := strconv.Atoi(claims.StandardClaims.Subject)
 		if idErr != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"message": "Unauthorizaed",
+				"data": map[string]interface{}{
+					"code": 401001,
+					"message": "Unauthorizaed",
+				},
 			})
 			c.Abort()
 			return

@@ -14,15 +14,15 @@ func SetUpRouter(router *gin.Engine) {
 	}
 	SetUsersRoutes(router, userController)
 
-	authController, authControllerErr := di.InitializeAuthController()
-	if authControllerErr != nil {
-		log.Fatal("authController init failed")
-	}
-	SetAuthRoutes(router, authController)
-
 	deviceController, deviceControllerErr := di.InitializeDeviceController()
 	if deviceControllerErr != nil {
 		log.Fatal("deviceController init failed")
 	}
 	SetDeviceRoutes(router, deviceController)
+
+	authController, authControllerErr := di.InitializeAuthController()
+	if authControllerErr != nil {
+		log.Fatal("authController init failed")
+	}
+	SetAuthRoutes(router, authController)
 }

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"go-receiver/configs"
 	serviceErr "go-receiver/internal/errors"
@@ -21,7 +22,7 @@ type authService struct {
 
 type AuthService interface {
 	RegisterUser(p RegisterUserParams) *serviceErr.ErrorDetail
-	LoginUser(params LoginUser) (token string, err *serviceErr.ErrorDetail)
+	LoginUser(params LoginUserParams) (token string, err *serviceErr.ErrorDetail)
 }
 
 func NewAuthService(usersRepo repository.UsersRepository, serviceErrConfig *serviceErr.ErrorConfig) AuthService {
@@ -46,7 +47,7 @@ func (s *authService) RegisterUser(p RegisterUserParams) *serviceErr.ErrorDetail
 	}
 	
 	// hash password
-	hashedPassword, hashErr := bcrypt.GenerateFromPassword([]byte(p.Password), bcrypt.DefaultCost)
+	hashedPassword, hashErr := bcrypt.GenerateFromPassword([]byte(p.Password), 10)
 	if hashErr != nil {
 		fmt.Println(hashErr)
 		return &s.serviceError.InternalServerErr
@@ -111,11 +112,11 @@ func (s *authService) GenerateToken(params GenerateTokenParams) (string, *servic
 	return token, nil
 }
 
-type LoginUser struct {
+type LoginUserParams struct {
 	Account string
 	Password string
 }
-func (s *authService) LoginUser(params LoginUser) (token string, err *serviceErr.ErrorDetail) {
+func (s *authService) LoginUser(params LoginUserParams) (token string, err *serviceErr.ErrorDetail) {
 	// find user
 	user, userErr := s.usersRepo.FindOneByAccount(params.Account)
 	if userErr != nil {
@@ -123,10 +124,18 @@ func (s *authService) LoginUser(params LoginUser) (token string, err *serviceErr
 		return "", &s.serviceError.InternalServerErr
 	}
 
+	if user == nil {
+		fmt.Println("userErr is", userErr)
+		return "", &s.serviceError.UserAccountNotFound
+	}
+
 	// compare password
 	compareErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(params.Password))
 	if compareErr != nil {
 		fmt.Println("compareErr is", compareErr)
+		if errors.Is(compareErr, bcrypt.ErrMismatchedHashAndPassword) {
+			return "", &s.serviceError.InvalidPassword
+		}
 		return "", &s.serviceError.InternalServerErr
 	}
 	

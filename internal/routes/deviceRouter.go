@@ -9,8 +9,10 @@ import (
 
 func SetDeviceRoutes(router *gin.Engine, deviceController controller.DeviceController) {
 	deviceRouter := router.Group("/device")
+	// deviceRouter.Use(cors.Default())
 	deviceRouter.Use(middleware.AuthMiddleware())
 
+	deviceRouter.POST("/create", deviceController.CreateSingleDevice)
 	deviceRouter.GET("/:id", deviceController.GetSingleDevice)
-	deviceRouter.POST("/", deviceController.CreateSingleDevice)
+	
 }

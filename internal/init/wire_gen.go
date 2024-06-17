@@ -41,7 +41,7 @@ func InitializeAuthController() (controller.AuthController, error) {
 	}
 	errorConfig := serviceErr.NewErrorConfig()
 	authService := service.NewAuthService(usersRepository, errorConfig)
-	authController := controller.NewAuthController(authService)
+	authController := controller.NewAuthController(authService, errorConfig)
 	return authController, nil
 }
 

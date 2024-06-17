@@ -1,7 +1,5 @@
 package serviceErr
 
-import "fmt"
-
 type ErrorConfig struct {
 	DuplicateAccountErr ErrorDetail
 	InternalServerErr   ErrorDetail
@@ -9,37 +7,55 @@ type ErrorConfig struct {
 	InvalidDeviceId		ErrorDetail
 	Unauthorized		ErrorDetail
 	InvalidParams		ErrorDetail
+	UserAccountNotFound		ErrorDetail
+	InvalidPassword		ErrorDetail
 }
 
 type ErrorDetail struct {
+	Status	int
 	Code    int
 	Message string
 }
 
 func NewErrorConfig() *ErrorConfig {
-	fmt.Println("err config")
 	return &ErrorConfig{
 		InvalidParams: ErrorDetail{
-			Code: 400,
+			Status: 400,
+			Code: 400001,
 			Message: "invalid params",
 		},
 		InvalidDeviceId: ErrorDetail{
-			Code:    400,
+			Status: 400,
+			Code:    400002,
 			Message: "invalid device id",
 		},
 		Unauthorized: ErrorDetail{
-			Code:    401,
+			Status: 401,
+			Code:    401001,
 			Message: "unauthorized",
 		},
+		InvalidPassword: ErrorDetail{
+			Status: 401,
+			Code:    401002,
+			Message: "invalid password",
+		},
 		DeviceNotFound: ErrorDetail{
-			Code:    404,
+			Status: 404,
+			Code:    404001,
 			Message: "device not found",
 		},
+		UserAccountNotFound: ErrorDetail{
+			Status: 404,
+			Code:    404002,
+			Message: "account not found",
+		},
 		DuplicateAccountErr: ErrorDetail{
-			Code:    409,
+			Status: 409,
+			Code:    409001,
 			Message: "account has already exists",
 		},
 		InternalServerErr: ErrorDetail{
+			Status: 500,
 			Code:    500,
 			Message: "internal server error",
 		},
